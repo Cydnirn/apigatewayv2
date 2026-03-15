@@ -1,8 +1,9 @@
-from flask import Flask, request, render_template, redirect, url_for, jsonify
-import boto3
 import os
+
+import boto3
 import requests
 from dotenv import load_dotenv
+from flask import Flask, jsonify, redirect, render_template, request, url_for
 
 load_dotenv()
 
@@ -22,11 +23,17 @@ s3_client = boto3.client(
     region_name=AWS_REGION,
 )
 
+
 @app.route("/")
 def index():
     response = requests.get(API_URL)
-    users = response.json()
-    return render_template("index.html", users=users, s3_bucket=f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com/")
+    users = response.json().get("body", [])
+    return render_template(
+        "index.html",
+        users=users,
+        s3_bucket=f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com/",
+    )
+
 
 @app.route("/users", methods=["POST"])
 def add_user():
@@ -51,7 +58,9 @@ def add_user():
         try:
             s3_client.upload_fileobj(image, S3_BUCKET, image_filename)
             # ExtraArgs={'ACL': 'public-read'}
-            image_url = f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com/{image_filename}"
+            image_url = (
+                f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com/{image_filename}"
+            )
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
@@ -73,6 +82,7 @@ def add_user():
 
     return redirect(url_for("index"))
 
+
 @app.route("/users/<int:user_id>/delete", methods=["DELETE"])
 def delete_user(user_id):
     response = requests.delete(f"{API_URL}/{user_id}")
@@ -85,10 +95,12 @@ def delete_user(user_id):
     except request.exceptions.JSONDecodeError:
         return jsonify({"error": "Unexpected empty response"}), response.status_code
 
+
 @app.route("/users/<int:user_id>", methods=["GET"])
 def get_user(user_id):
     response = requests.get(f"{API_URL}/{user_id}")
     return jsonify(response.json()), response.status_code
+
 
 @app.route("/users/<int:user_id>", methods=["PUT", "PATCH"])
 def update_user(user_id):
@@ -100,5 +112,6 @@ def update_user(user_id):
     else:
         return jsonify({"error": "Failed to update user"}), response.status_code
 
+
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host="0.0.0.0")
