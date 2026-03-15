@@ -1,0 +1,16 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  "Authentication": {
+    "Bucket": "cyd-personal-bucket",
+    "Key": "auths.json"
+  },
+  "Image": {
+    "Name": "284845684968.dkr.ecr.us-east-1.amazonaws.com/lks-users:latest"
+  },
+  "Ports": [
+    {
+      "ContainerPort": 5000,
+      "HostPort": 5000
+    }
+  ]
+}

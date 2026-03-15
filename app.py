@@ -11,7 +11,6 @@ app = Flask(__name__)
 # Konfigurasi AWS
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-AWS_SESSION_TOKEN = os.getenv("AWS_SESSION_TOKEN")
 AWS_REGION = os.getenv("AWS_REGION")
 S3_BUCKET = os.getenv("S3_BUCKET_NAME")
 API_URL = os.getenv("API_GATEWAY_URL")
@@ -20,7 +19,6 @@ s3_client = boto3.client(
     "s3",
     aws_access_key_id=AWS_ACCESS_KEY_ID,
     aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    aws_session_token=AWS_SESSION_TOKEN,
     region_name=AWS_REGION,
 )
 
@@ -41,7 +39,7 @@ def add_user():
 
     # 1️⃣ Cek apakah email sudah ada di database
     check_response = requests.get(f"{API_URL}?email={email}")
-    
+
     if check_response.status_code == 409:  # Jika email sudah ada
         print("❌ Email already exists, stopping process")  # Debugging log
         return jsonify({"error": "Email already exists"}), 409
@@ -52,7 +50,8 @@ def add_user():
         image_filename = f"users/{image.filename}"
         try:
             s3_client.upload_fileobj(image, S3_BUCKET, image_filename)
-            image_url = f"https://{S3_BUCKET}.s3-{AWS_REGION}.amazonaws.com/{image_filename}"
+            # ExtraArgs={'ACL': 'public-read'}
+            image_url = f"https://{S3_BUCKET}.s3.{AWS_REGION}.amazonaws.com/{image_filename}"
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
@@ -80,7 +79,7 @@ def delete_user(user_id):
 
     if response.status_code == 204:
         return jsonify({"message": "User deleted successfully"}), 200
-    
+
     try:
         return jsonify(response.json()), response.status_code
     except request.exceptions.JSONDecodeError:
