@@ -2,6 +2,8 @@
 LICENSE
 .env
 .env.*
+*.zip
+.venv
 
 app.py_
 
