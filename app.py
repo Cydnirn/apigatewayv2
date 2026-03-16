@@ -26,6 +26,7 @@ s3_client = boto3.client(
 
 @app.route("/")
 def index():
+    print("Hello")
     response = requests.get(API_URL)
     users = response.json()
     return render_template(
